@@ -73,7 +73,7 @@ ESP32DigimonDataLoader dataLoader;
 VPetLCD screen(&displayAdapter, &spriteManager, 40, 16);
 VPetLCDMenuBar32p menuBar(7,5,displayHeight);
 
-V20::DigimonWatchingScreen digimonScreen(&spriteManager, digimon.getDigimonIndex(), -8, 40, 0, 0, digimon.getState());
+V20::DigimonWatchingScreen digimonScreen(&spriteManager, &digimon, -8, 40, 0, 0);
 V20::DigimonNameScreen digiNameScreen(&spriteManager, dataLoader.getDigimonProperties(digiIndex)->digiName, digimon.getDigimonIndex(), 24);
 V20::AgeWeightScreen ageWeightScreen(5, 21);
 V20::HeartsScreen hungryScreen("Hungry", digimon.getHungerHearts(), 4);
@@ -165,7 +165,8 @@ void stateMachineInit() {
     //uint8_t maxdp = digimon.getProperties()->maxDigimonPower;
     switch (menuBar.getSelection()) {
     case 0: // stats screen
-      //digiNameScreen.setDigimonSpriteIndex(digimon.getDigimonIndex());
+      digiNameScreen.setDigimonSpriteIndex(digimon.getDigimonIndex());
+      digiNameScreen.setDigimonName(digimon.getProperties()->digiName);
       hungryScreen.setHearts(digimon.getHungerHearts());
       strengthScreen.setHearts(digimon.getStrengthHearts());
       effortScreen.setHearts(digimon.getEffortHearts());
@@ -402,7 +403,6 @@ void loop()
   unsigned long t1 = millis();
 
   digimon.loop(lastDelta);
-  digimonScreen.setNumberOfPoop(digimon.getNumberOfPoops());
 
 
   //updating the screens which need the loop
@@ -419,9 +419,10 @@ void loop()
   if (digimon.isEvolved()){
     digimon.setEvolved(false);
     digimonScreen.evolveDigimon();
+    digimon.setProperties(dataLoader.getDigimonProperties(digimon.getDigimonIndex()));
+    Serial.println("Evolved to: "+String(digimon.getProperties()->digiName));
     if(digimon.getState() == 0){
       digimon.setState(1);
-      digimonScreen.setState(1);
     }
   }
 
