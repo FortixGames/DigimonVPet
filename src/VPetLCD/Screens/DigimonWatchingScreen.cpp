@@ -7,7 +7,7 @@
 #include "DigimonWatchingScreen.h"
 #include <Arduino.h>
 
-V20::DigimonWatchingScreen::DigimonWatchingScreen(AbstractSpriteManager* _spriteManager, uint8_t _digimonSpritesIndex, int8_t _minX, int8_t _maxX, int8_t _minY, int8_t _maxY) {
+V20::DigimonWatchingScreen::DigimonWatchingScreen(AbstractSpriteManager* _spriteManager, uint8_t _digimonSpritesIndex, int8_t _minX, int8_t _maxX, int8_t _minY, int8_t _maxY, uint8_t _state) {
   setXLimitations(_minX, _maxX); // -8 32
   setYLimitations(_minY, _maxY);
   digimonX = 8;
@@ -23,18 +23,23 @@ V20::DigimonWatchingScreen::DigimonWatchingScreen(AbstractSpriteManager* _sprite
   poopAnimationCounter = 0;
   updateIntervallTime = 500;
   digimonSpritesIndex=_digimonSpritesIndex;
+  state = _state;
 }
-
 
 boolean V20::DigimonWatchingScreen::randomDecision(int percent) {
   return percent > random(0, 100);
 }
 
+void V20::DigimonWatchingScreen::evolveDigimon(){
+  if(digimonSpritesIndex < 4){
+    Serial.println("evolving digimon in watching screen, changing sprite:" + String(digimonSpritesIndex+1));
+    digimonSpritesIndex++;
+  }
+}
+
 void V20::DigimonWatchingScreen::loop(long delta) {
 
   if(isNextFrameTime(delta)){
-
-
     if(isFlushing){
       if(poopOffsetY<16+8){
         poopOffsetY++;
@@ -51,17 +56,15 @@ void V20::DigimonWatchingScreen::loop(long delta) {
     calculateWalking();
     }
   }
-
 }
-
 
 void V20::DigimonWatchingScreen::calculateWalking() {
 
-  if (randomDecision(probabilityChangeDirection) || digimonX < minX || digimonX > maxX - numberOfPoop * poopWidth) {
+  if (state != 0 && randomDecision(probabilityChangeDirection) || digimonX < minX || digimonX > maxX - numberOfPoop * poopWidth) {
     looksLeft = !looksLeft;
   }
 
-  if (randomDecision(probabilityChangeDirection) || digimonY < minY || digimonY > maxY) {
+  if (state != 0 && randomDecision(probabilityChangeDirection) || digimonY < minY || digimonY > maxY) {
     looksUp = !looksUp;
   }
 
@@ -71,7 +74,7 @@ void V20::DigimonWatchingScreen::calculateWalking() {
     currentWalkSprite %= 2;
   }
 
-  if (randomDecision(probabilityMoveVertical)) {
+  if (state != 0 && randomDecision(probabilityMoveVertical)) {
     if (looksUp) {
       if (digimonY < maxY - 1) {
         digimonY++;
@@ -94,24 +97,26 @@ void V20::DigimonWatchingScreen::calculateWalking() {
     }
   }
 
-  if (looksLeft) {
-    if (digimonX > minX + 1) {
-      digimonX--;
-    }
-    else {
-      looksLeft = !looksLeft;
-      if (digimonX < maxX - 1 - numberOfPoop * poopWidth)
-        digimonX++;
-    }
-  }
-  else {
-    if (digimonX < maxX - 1 - numberOfPoop * poopWidth) {
-      digimonX++;
-    }
-    else {
-      looksLeft = !looksLeft;
-      if (digimonX > minX + 1)
+  if(state != 0){
+    if (looksLeft) {
+      if (digimonX > minX + 1) {
         digimonX--;
+      }
+      else {
+        looksLeft = !looksLeft;
+        if (digimonX < maxX - 1 - numberOfPoop * poopWidth)
+          digimonX++;
+      }
+    }
+    else {
+      if (digimonX < maxX - 1 - numberOfPoop * poopWidth) {
+        digimonX++;
+      }
+      else {
+        looksLeft = !looksLeft;
+        if (digimonX > minX + 1)
+          digimonX--;
+      }
     }
   }
 
@@ -160,6 +165,11 @@ void V20::DigimonWatchingScreen::drawWakedUp(VPetLCD* lcd) {
   lcd->draw16BitArray(sprite, screenX + digimonX, screenY + digimonY, !looksLeft, pixelColor);
 }
 
+void V20::DigimonWatchingScreen::drawSleeping(VPetLCD* lcd, boolean inBed) {
+  const unsigned short* sprite = spriteManager->getDigimonSprite(digimonSpritesIndex, SPRITE_DIGIMON_SLEEPING);
+  lcd->draw16BitArray(sprite, screenX + digimonX, screenY + digimonY, !looksLeft, pixelColor);
+}
+
 /**
  * draws the screen
  * */
@@ -167,4 +177,3 @@ void V20::DigimonWatchingScreen::draw(VPetLCD* lcd) {
   drawPoop(lcd);
   drawWakedUp(lcd);
 }
-

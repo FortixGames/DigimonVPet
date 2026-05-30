@@ -40,26 +40,27 @@ namespace V20{
       uint8_t poopAnimationCounter;
       uint8_t poopOffsetY=0; // the offset when flushing
       boolean isFlushing=false;
+      uint8_t state;
+
       void drawPoop(VPetLCD* lcd);
 
 
       boolean randomDecision(int percent);
 
-      void calculateWalking();
+      void calculateWalking();      
       
-
       void drawWakedUp(VPetLCD *lcd);
       void drawSleeping(VPetLCD *lcd, boolean inBed);
 
     public:
-      DigimonWatchingScreen(AbstractSpriteManager* _spriteManager,uint8_t _digimonSpritesIndex, int8_t _minX, int8_t _maxX,int8_t _minY, int8_t _maxY);
+      DigimonWatchingScreen(AbstractSpriteManager* _spriteManager,uint8_t _digimonSpritesIndex, int8_t _minX, int8_t _maxX,int8_t _minY, int8_t _maxY, uint8_t _state);
       void draw(VPetLCD *lcd);
       void loop(long delta); 
       void setXLimitations(int8_t _minX, int8_t _maxX){minX = _minX; maxX = _maxX;};
       void setYLimitations(int8_t _minY, int8_t _maxY){minY = _minY; maxY = _maxY;};
+      void setState(uint8_t _state){state=_state;};
       void setNumberOfPoop(uint8_t _numberOfPoop){numberOfPoop=_numberOfPoop;};
       void flushPoop();
-    
+      void evolveDigimon();
   };
-
 };
